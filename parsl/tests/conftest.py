@@ -24,6 +24,7 @@ import pytest
 
 import parsl
 from parsl.dataflow.dflow import DataFlowKernelLoader
+from parsl.dataflow.executor_selection import forced_executor
 from parsl.utils import RepresentationMixin
 
 logger = logging.getLogger(__name__)
@@ -454,3 +455,15 @@ def randomstring():
         return "".join(random.choice(alphabet) for _ in range(length))
 
     return func
+
+
+EXECUTORS_TO_TEST = ["taskvine", "workqueue", "threads", "htex_local"]
+
+
+@pytest.fixture(params=EXECUTORS_TO_TEST, autouse=True)
+def run_tests_with_executor(request):
+    token = forced_executor.set(request.param)
+    try:
+        yield request.param
+    finally:
+        forced_executor.reset(token)
